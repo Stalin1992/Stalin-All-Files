@@ -1,0 +1,56 @@
+#install winrm in ansible master to manage windows
+Check your python version
+python --version
+based on that get the pip
+
+wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
+
+#install the pip
+
+sudo python2.7 get-pip.py
+
+#install the winrm as --user
+
+pip2.7 install https://github.com/diyan/pywinrm/archive/master.zip#egg=pywinrm --user
+
+##  in windows machine run the following in powershell
+
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
+$file = "$env:temp\ConfigureRemotingForAnsible.ps1"
+
+(New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
+
+powershell.exe -ExecutionPolicy ByPass -File $file
+
+#to check the current listener in windows
+winrm enumerate winrm/config/Listener
+
+[dev]
+172.31.80.196
+172.31.24.193
+
+[windows]
+172.31.19.221
+
+[db]
+#172.31.90.72
+ansible-slave-1
+
+[windows:vars]
+ ansible_user =  Administrator
+ ansible_password = Klond1ke
+ ansible_port = 5986
+ ansible_connection = winrm
+ ansible_winrm_transport = basic
+ ansible_winrm_scheme = https
+ ansible_winrm_server_cert_validation = ignore
+ ansible_become_method=runas
+ ansible_winrm_kerberos_delegation = true
+
+
+# Links to modules
+# for windows
+https://docs.ansible.com/ansible/2.9/modules/list_of_windows_modules.html
+#for linux flavours
+https://docs.ansible.com/ansible/2.9/modules/list_of_all_modules.html

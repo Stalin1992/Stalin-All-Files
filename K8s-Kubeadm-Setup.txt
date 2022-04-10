@@ -1,0 +1,149 @@
+#Create 3 ubuntu 18 LTS EC2 with t2.medium (make sure 2 or more CPUs)
+
+Name them as
+
+K8s-master
+k8s-worker-node1
+k8s-worker-node2
+
+#To identify the system, update the hostname
+
+sudo hostnamectl set-hostname "k8s-master"
+sudo hostnamectl set-hostname "k8s-worker-node1"
+sudo hostnamectl set-hostname "k8s-worker-node2"
+
+#Disable swap on all the Nodes
+
+sudo swapoff -a
+sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+#Install Docker Container Runtime On All The Nodes
+
+#Install the required packages for Docker.
+
+sudo apt-get update -y
+sudo apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
+
+#Add the Docker GPG key and apt repository.
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+echo \
+  "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+#Install the Docker community edition.
+
+sudo apt-get update -y
+sudo apt-get install docker-ce docker-ce-cli containerd.io -y
+
+#Add the docker daemon configurations to use systemd as the cgroup driver.
+
+cat <<EOF | sudo tee /etc/docker/daemon.json
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+
+#Start and enable the docker service.
+
+sudo systemctl enable docker
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+
+#Install Kubeadm & Kubelet & Kubectl on all Nodes
+#Install the required dependencies.
+
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl
+sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+#Add the GPG key and apt repository.
+
+echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+#Update apt and install kubelet, kubeadm and kubectl.
+
+sudo apt-get update -y
+
+sudo apt-get install -y kubelet kubeadm kubectl
+
+#####################################
+Note: If you want to install a specific version of kubernetes, you can specify the version as shown below.
+
+sudo apt-get install -y kubelet=1.20.6-00 kubectl=1.20.6-00 kubeadm=1.20.6-00
+Add hold to the packages to prevent upgrades.
+
+sudo apt-mark hold kubelet kubeadm kubectl
+sudo apt-get install -y kubelet kubeadm kubectl
+
+########################################
+
+#Initialize Kubeadm On Master Node To Setup Control Plane
+
+export IPADDR="172.31.91.217" --> update your master node ip
+export NODENAME=$(hostname -s)
+
+#Now, initialize the master node control plane configurations using the following kubeadm command.
+
+sudo kubeadm init --apiserver-advertise-address=$IPADDR  --apiserver-cert-extra-sans=$IPADDR  --pod-network-cidr=192.168.0.0/16 --node-name $NODENAME --ignore-preflight-errors Swap
+
+#On a successful kubeadm initialization you should get an output with kubeconfig file location and the join command with the token as shown below. Copy that and save it to the file. we will need it for joining the worker node to the master
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+#Now, verify the kubeconfig by executing the following kubectl command to list all the pods in the kube-system namespace.
+
+kubectl get po -n kube-system
+
+#You will see the two Coredns pods in a pending state. It is the expected behavior. Once we install the network plugin, it will be in a running state
+
+#Execute the following command to install the flannel network plugin on the cluster.
+
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+kubectl get po -n kube-system
+
+#wait to see all pods in running state
+
+#Now our cluster is created, you can see these by using the command below:
+on master execute the network
+
+kubectl get nodes
+
+#execute the following command in the master node to recreate the token with the join command.
+
+kubeadm token create --print-join-command
+
+#copy the kubeadm join command printed above and run is as root on the woker nodes
+
+#Now execute the kubectl command to check if the node is added to the master.
+
+kubectl get nodes
+
+#Deploying Nginx container on Kubernetes
+#Deploying Nginx Container
+
+kubectl create deployment mynginx --image=nginx --replicas=2
+
+kubectl get pods
+kubectl get deployments
+
+#Expose the deployment as service. This will create an NodePort in front of those 2 containers and allow us to publicly access them:
+
+kubectl expose deployment mynginx --port=80 --type=NodePort
+
+kubectl get services -o wide
+

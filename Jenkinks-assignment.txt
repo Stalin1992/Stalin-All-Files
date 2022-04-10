@@ -1,0 +1,17 @@
+Install JDK 8 or 11
+Install Jenkins
+Install GIT plugin
+create a job first -->echo ""
+Manually first
+Poll SCM to be configured in the job
+ * * * * *
+use GIT
+  -- GIT HUB
+  -- local commit to trigger job
+
+Install/download Maven
+Try to set up the maven path
+setup global tool config in Jenkins
+ -- JDK
+ -- GIT
+ -- MAVEN

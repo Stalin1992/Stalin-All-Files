@@ -1,0 +1,59 @@
+create a folder kubectl under C:\Users\John
+
+cd kubctl
+C:\Users\Joh\Kubectl -->
+curl -LO https://dl.k8s.io/release/v1.21.0/bin/windows/amd64/kubectl.exe
+C:\Users\John\Kubectl\kubectl.exe
+
+Win Explorer--> right click this PC--> Properties --> Advanced Sytem Settings --> environment variables --> system variables --> select and edit path --> New -->
+C:\Users\John\Kubectl -> Apply OK
+
+Installing Minikube:
+
+Download minikube.exe -->
+https://storage.googleapis.com/minikube/releases/latest/minikube-installer.exe
+
+Once downloaded (Downloads  folder).Click to install and leave everything default.
+
+Start the Docker desktop
+Once the docker is up fully (docker version)
+
+To check if your kubectl is installed correctly run the command
+kubectl version
+
+To start the minikube
+
+minikube start --driver=docker
+
+If you see message like below your minikube is started successfully
+
+* minikube v1.19.0 on Microsoft Windows 10 Pro 10.0.19041 Build 19041
+* Using the docker driver based on existing profile
+* Starting control plane node minikube in cluster minikube
+* Updating the running docker "minikube" container ...
+* Preparing Kubernetes v1.20.2 on Docker 20.10.5 ...
+* Verifying Kubernetes components...
+  - Using image kubernetesui/metrics-scraper:v1.0.4
+  - Using image kubernetesui/dashboard:v2.1.0
+! Executing "docker container inspect minikube --format={{.State.Status}}" took an unusually long time: 2.0011605s
+* Restarting the docker service may improve performance.
+  - Using image gcr.io/k8s-minikube/storage-provisioner:v5
+* Enabled addons: storage-provisioner, dashboard, default-storageclass
+* Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
+
+Run to check if all the services in minikube are started correctly
+
+minikube status
+
+to make the docker as default driver
+
+minikube config set driver docker
+
+---Test
+
+kubectl create deployment mynginx --image=nginx
+
+kubectl expose deployment mynginx --type=NodePort --port=80
+
+
+minikube service mynginx --url

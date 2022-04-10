@@ -1,0 +1,165 @@
+docker version --> find the version of the docker installed - Make sure client and server versions are listed.
+
+###
+Create an account in https://hub.docker.com if you don't already have it
+
+docker login --> give your username & pwd
+
+docker ps --> list all active/running docker containers
+
+docker ps -a --> list all active/inactive/stopped docker containers
+
+docker pull <image-name>:<tag_name> --> pull the image from the docker hub and store it in your local host
+e.g docker pull centos:6.10 - If you do not specify any version,it will pull the latest version (be sure to check the hub.docker.com)
+
+docker run <options> <image-name> --> This will download/pull the image from the docker hub if not present in the local host and run a container
+  Options:
+  --name -> give a name to the container if not default name is assigned
+  -v -> specify the local storage/volume to map to the container volume while running a docker.
+  -p 80:80 --> publish and map the host:container ports
+  -d -> run the docker container in detached/backgroud mode
+  --link <container/image-name> --> to link to another image like db to the front end
+  --rm --> remove the container once its stopped
+
+##for mounting to the local volume
+
+docker run -d -p 82:80 --name mycustom_nginx -v C:\Users\chand\0815-docker:/usr/share/nginx/html nginx
+
+
+docker rm -f <cont-id> -> force remove the running docker
+
+docker rm <cont-id> -> remove the stopped container
+
+docker container prune -->remove all the stopped/inactive containers
+
+docker inspect <cont-id> -->inspect the container for all the parameters in json format
+
+docker info --> gives info about the docker, its running containers, images etc ..
+
+
+docker logs <cont-id> --> displays the container logs
+
+docker login --> login to the docker hub
+
+
+docker stop <cont-id> --> stop a running docker container
+
+docker start <cont-id> --> start a stopped docker container
+
+docker stats <cont-id> --> displays the resource statistics
+
+docker top <cont-id> --> display the running process of a container
+
+docker update <flags> <cont-id> --> update configuration of the container
+
+docker -exec -it <cont_id> <cmd> - to interactively login to the container as terminal.
+e.g
+docker -exec -it 09876543 bash
+
+
+docker images --> list all images in the local cache
+
+docker rmi <image-name/id> --> remove the image from the local host
+
+docker build -t <tag/img name> . --> Create a custom image using the Dockerfile in the current context.
+e.g of Dockerfile
+
+FROM node:10-slim
+
+WORKDIR /app
+
+RUN npm install -g nodemon
+ADD package*.json /app/
+
+#RUN npm config set registry http://registry.npmjs.org
+#RUN npm install && npm ls
+
+RUN npm ci \
+ && npm cache clean --force \
+ && mv /app/node_modules /node_modules
+
+
+ADD . /app
+
+ENV PORT 80
+EXPOSE 80
+
+CMD ["node", "server.js"]
+
+docker push <image-name> --> push a custom image to the docker hub
+
+Docker compose - to run multiple container images in one file
+format is docker-compose.yml file
+
+version: "3"
+services:
+ redis:
+  image: redis
+ nginx:
+  image: nginx
+  ports:
+   - 80:80
+once done, use below command to run the yml file
+docker-compose up
+
+
+AWS EC2
+Container Orchestration:(Docker SWARM)
+Create manager and worker nodes and install docker in all the manager/worker nodes
+
+docker swarm init
+you will get a token run this on the worker nodes so it joins the cluster
+
+docker swarm join --token SWMTKN-1-60nzhogsmiwqwbjhxi9ztgkaebuphm06kk554ofb4k9984t175-8l8xc558ywgnamtefb8gjauug 172.31.38.81:2377
+
+Create 3 instances of docker container and make sure they are distributed across the worker nodes
+
+docker node ls -- list all the nodes that are currently joined in the master
+
+docker service create --replicas=3 -p 80:80 nginx
+
+docker service ls --> list all docker services
+
+docker service ps <service-id> - to check the distribution of containers among the hosts
+
+docker service scale <service-id>=15 
+
+docker service ps <service-id> - to check the distribution of containers among the hosts
+
+docker servie scale <service-id>=5 (scale down)
+
+docker service rm <service-id> -> removes the service
+
+apply rolling-updates
+add a version and then see if we can update the version of the running container
+
+docker service create --replicas 3 --name redis --update-delay 10s redis:3.0.6
+to confirm the redis version
+docker service inspect --pretty redis
+
+update to new version
+It will update the container one by one (stop one make the updates and bring it up)
+
+docker service update --image redis:3.0.7 redis
+
+to confirm the redis new version
+docker service inspect --pretty redis
+
+The scheduler applies rolling updates as follows by default:
+
+Stop the first task.
+Schedule update for the stopped task.
+Start the container for the updated task.
+If the update to a task returns RUNNING, wait for the specified delay period then start the next task.
+If, at any time during the update, a task returns FAILED, pause the update.
+
+
+
+
+swarm - 
+k8s 
+Meos 
+
+
+
+

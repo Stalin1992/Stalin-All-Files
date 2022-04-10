@@ -1,0 +1,68 @@
+Steps to setup Ansible Control Servers and Clients
+
+If AMI is Amazon Linux2 (only in control server)
+
+sudo yum update -y (server and client)
+
+# this command needs to be run only on master
+
+sudo amazon-linux-extras install ansible2
+
+ansible --version
+
+Create a new user for ansible administration & grant admin access to user (Master and Slave)
+
+sudo useradd ansadmin
+sudo passwd ansadmin
+
+
+ below command addes ansadmin to sudoers file. But strongly recommended to use "visudo" command if you are aware vi or nano editor. 
+
+as root
+visudo
+
+add this line in the last
+
+ansadmin	ALL=(ALL)	NOPASSWD:ALL
+
+vi /etc/ssh/sshd_config
+
+comment PasswordAuthentication no
+uncomment PasswordAuthentication yes
+
+(important in master and slave)
+restart the sshd service
+sudo service sshd restart
+
+Login as a ansadmin user on master and generate ssh key (Master)
+
+ssh-keygen
+Copy keys onto all ansible client nodes (Master)
+
+ssh-copy-id <target-server>
+Update target servers information on /etc/ansible/hosts file (Master)
+
+cd /etc/ansible
+vi hosts
+
+echo "<target server IP>" > /etc/ansible/hosts
+Run ansible command as ansadmin user it should be successful (Master)
+
+ansible all -m ping
+
+commands:
+ansible -m copy -a "src=/home/ansadmin/first.txt dest=/home/ansadmin" all_host
+
+installaing httpd in remote
+
+ansible  -b -K  -m  yum -a "name=httpd state=latest" all_host (with pwd)
+
+ansible  -b -m  yum -a "name=httpd state=latest" all_host (without pwd)
+
+
+
+
+
+
+
+
